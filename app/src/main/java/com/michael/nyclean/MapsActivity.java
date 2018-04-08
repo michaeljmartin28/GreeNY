@@ -16,6 +16,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
@@ -81,15 +82,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             mLocationsArray.get(i).setDistance(dist);
             mClosestLocations[i] = mLocationsArray.get(i);
         }
-        log("Before sorting...");
-        for (int i = 0; i < mClosestLocations.length; i++) {
-            log(mClosestLocations[i].toString());
-        }
         Arrays.sort(mClosestLocations);
-        log("After sorting...");
-        for (int i = 0; i < mClosestLocations.length; i++) {
-            log(mClosestLocations[i].toString());
-        }
     }
 
     private class HttpHandler {
@@ -199,30 +192,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                                                               site_type);
                         mLocationsArray.add(newBinLoc);
 
-                        // Put all the location details into the map
-                        HashMap<String, String> newBinLocation = new HashMap<>();
-                        newBinLocation.put("address", address);
-                        newBinLocation.put("borough", borough);
-                        newBinLocation.put("latitude", latitude);
-                        newBinLocation.put("longitude", longitude);
-                        newBinLocation.put("park_site_name", park_site_name);
-                        newBinLocation.put("site_type", site_type);
-
-                        // adding the map object to locations list
-                        locationsList.add(newBinLocation);
-
-                        mListOfBins.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                            @Override
-                            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-
-                                String lat = ((TextView)view.findViewById(R.id.latitutde)).getText().toString();
-                                String lon = ((TextView)view.findViewById(R.id.longitude)).getText().toString();
-                                LatLng loc = new LatLng(Double.parseDouble(lat), Double.parseDouble(lon));
-                                mMap.addMarker(new MarkerOptions().position(loc).title("Recycle Bin Here!"));
-                                mMap.moveCamera(CameraUpdateFactory.zoomTo(17f));
-                                mMap.moveCamera(CameraUpdateFactory.newLatLng(loc));
-                            }
-                        });
                     }
                 } catch (final JSONException e) {
                     Log.e(TAG, "Json parsing error: " + e.getMessage());
@@ -256,11 +225,34 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             // Find out current location
             mMyLocation = new LatLng(40.7284738, -73.9950050);
             findClosestPlaces(mMyLocation);
-            log("Size of mClosestLocation: " + mClosestLocations.length);
+
+            for(int i = 0; i < mClosestLocations.length; i++){
+                // Put all the location details into the map
+                HashMap<String, String> newBinLocation = new HashMap<>();
+                newBinLocation.put("address", mClosestLocations[i].getAddress());
+                newBinLocation.put("borough", mClosestLocations[i].getBorough());
+                newBinLocation.put("latitude", String.valueOf(mClosestLocations[i].getLatitude()));
+                newBinLocation.put("longitude", String.valueOf(mClosestLocations[i].getLongitude()));
+                newBinLocation.put("park_site_name", mClosestLocations[i].getParkSiteName());
+                newBinLocation.put("site_type", mClosestLocations[i].getSiteType());
+
+                // adding the map object to locations list
+                locationsList.add(newBinLocation);
+            }
 
 
+            mListOfBins.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
 
-
+                    String lat = ((TextView)view.findViewById(R.id.latitutde)).getText().toString();
+                    String lon = ((TextView)view.findViewById(R.id.longitude)).getText().toString();
+                    LatLng loc = new LatLng(Double.parseDouble(lat), Double.parseDouble(lon));
+                    mMap.addMarker(new MarkerOptions().position(loc).title("Recycle Bin Here!"));
+                    mMap.moveCamera(CameraUpdateFactory.zoomTo(17f));
+                    mMap.moveCamera(CameraUpdateFactory.newLatLng(loc));
+                }
+            });
             ListAdapter adapter = new SimpleAdapter(MapsActivity.this, locationsList,
                     R.layout.list_item, new String[]{ "address","borough", "latitude", "longitude", "park_site_name", "site_type"},
                     new int[]{R.id.address, R.id.borough, R.id.latitutde, R.id.longitude, R.id.park_site_name, R.id.site_type});
@@ -288,7 +280,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         // TODO: fix to be current location
         mMyLocation = new LatLng(40.7284738, -73.9950050);
-        mMap.addMarker(new MarkerOptions().position(mMyLocation).title(markerTitle));
+        mMap.addMarker(new MarkerOptions().position(mMyLocation).title(markerTitle).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
         mMap.moveCamera(CameraUpdateFactory.zoomTo(17f));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(mMyLocation));
 
