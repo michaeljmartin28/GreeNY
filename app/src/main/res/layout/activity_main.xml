@@ -14,7 +14,7 @@
         android:background="@drawable/bg_central_park">
 
         <Button
-            android:id="@+id/button"
+            android:id="@+id/startSearchButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"

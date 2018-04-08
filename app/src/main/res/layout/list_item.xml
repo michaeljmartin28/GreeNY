@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="@dimen/activity_horizontal_margin">
+    <TextView
+        android:id="@+id/address"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="2dip"
+        android:textSize="22dp"
+        android:textColor="@color/colorAccent" />
+    <TextView
+        android:id="@+id/borough"
+        style="@style/ListItemTheme" />
+    <TextView
+        android:id="@+id/latitutde"
+        style="@style/ListItemTheme"/>
+    <TextView
+        android:id="@+id/longitude"
+        style="@style/ListItemTheme" />
+    <TextView
+        android:id="@+id/park_site_name"
+        style="@style/ListItemTheme" />
+
+    <TextView
+        android:id="@+id/site_type"
+        style="@style/ListItemTheme" />
+</LinearLayout>
