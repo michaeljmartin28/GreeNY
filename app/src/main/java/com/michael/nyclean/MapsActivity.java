@@ -40,6 +40,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -58,6 +59,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private RecycleBinLocation[] mClosestLocations;
 
     private LatLng mMyLocation;
+
+    private final DecimalFormat df = new DecimalFormat("#0.00");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,7 +84,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void findClosestPlaces(LatLng myLocation) {
         mClosestLocations = new RecycleBinLocation[mLocationsArray.size()];
-        final double DEG_LENGTH = 110.25;
+        final double DEG_LENGTH = 68.5061739;
 
         for (int i = 0;i<mLocationsArray.size();i++){
             double currBinLat = mLocationsArray.get(i).getLatitude(),
@@ -244,6 +247,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 newBinLocation.put("borough", mClosestLocations[i].getBorough());
                 newBinLocation.put("latitude", String.valueOf(mClosestLocations[i].getLatitude()));
                 newBinLocation.put("longitude", String.valueOf(mClosestLocations[i].getLongitude()));
+                newBinLocation.put("distance", String.valueOf(df.format(mClosestLocations[i].getDistance()) + " miles"));
                 newBinLocation.put("park_site_name", mClosestLocations[i].getParkSiteName());
                 newBinLocation.put("site_type", mClosestLocations[i].getSiteType());
 
@@ -264,8 +268,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
             });
             ListAdapter adapter = new SimpleAdapter(MapsActivity.this, locationsList,
-                    R.layout.list_item, new String[]{ "address","borough", "latitude", "longitude", "park_site_name", "site_type"},
-                    new int[]{R.id.address, R.id.borough, R.id.latitutde, R.id.longitude, R.id.park_site_name, R.id.site_type});
+                    R.layout.list_item, new String[]{ "address","borough", "latitude", "longitude", "distance", "park_site_name", "site_type"},
+                    new int[]{R.id.address, R.id.borough, R.id.latitutde, R.id.longitude, R.id.distance, R.id.park_site_name, R.id.site_type});
             mListOfBins.setAdapter(adapter);
 
             // Display closest five RecycleBins on GoogleMaps
@@ -296,7 +300,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             // Got last known location. In some rare situations this can be null.
                             log("Lat: " + location.getLatitude() + " : " + "Lon: " + location.getLongitude());
                             mMyLocation = new LatLng(location.getLatitude(), location.getLongitude());
-                            mMap.addMarker(new MarkerOptions().position(mMyLocation).title("Recycle bin here!").icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
+                            mMap.addMarker(new MarkerOptions().position(mMyLocation).title("You Are Here!").icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
                             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(mMyLocation, 17f));
                         }
                     });

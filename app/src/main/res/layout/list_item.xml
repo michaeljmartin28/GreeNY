@@ -16,9 +16,14 @@
         style="@style/ListItemTheme" />
     <TextView
         android:id="@+id/latitutde"
+        android:visibility="gone"
         style="@style/ListItemTheme"/>
     <TextView
         android:id="@+id/longitude"
+        android:visibility="gone"
+        style="@style/ListItemTheme" />
+    <TextView
+        android:id="@+id/distance"
         style="@style/ListItemTheme" />
     <TextView
         android:id="@+id/park_site_name"
