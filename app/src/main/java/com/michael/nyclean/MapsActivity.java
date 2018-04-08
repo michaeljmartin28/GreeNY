@@ -208,7 +208,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         newBinLocation.put("park_site_name", park_site_name);
                         newBinLocation.put("site_type", site_type);
 
-                        // adding map object to locations list
+                        // adding the map object to locations list
                         locationsList.add(newBinLocation);
 
                         mListOfBins.setOnItemClickListener(new AdapterView.OnItemClickListener() {
