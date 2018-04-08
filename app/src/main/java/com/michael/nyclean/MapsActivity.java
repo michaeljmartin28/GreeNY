@@ -1,8 +1,12 @@
 package com.michael.nyclean;
 
+import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -12,6 +16,8 @@ import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -19,6 +25,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.OnSuccessListener;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -41,6 +48,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     public static final String TAG = "MapsActivity";
 
+    private FusedLocationProviderClient mFusedLocationProviderClient;
+
     private GoogleMap mMap;
     private ListView mListOfBins;
     private ArrayList<HashMap<String, String>> locationsList;
@@ -58,6 +67,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+
 
 
         mListOfBins = (ListView) findViewById(R.id.list_of_bins);
@@ -249,8 +260,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     String lon = ((TextView)view.findViewById(R.id.longitude)).getText().toString();
                     LatLng loc = new LatLng(Double.parseDouble(lat), Double.parseDouble(lon));
                     mMap.addMarker(new MarkerOptions().position(loc).title("Recycle Bin Here!"));
-                    mMap.moveCamera(CameraUpdateFactory.zoomTo(17f));
-                    mMap.moveCamera(CameraUpdateFactory.newLatLng(loc));
+                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(loc, 17f));
                 }
             });
             ListAdapter adapter = new SimpleAdapter(MapsActivity.this, locationsList,
@@ -258,17 +268,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     new int[]{R.id.address, R.id.borough, R.id.latitutde, R.id.longitude, R.id.park_site_name, R.id.site_type});
             mListOfBins.setAdapter(adapter);
 
-            log("5 closest...");
             // Display closest five RecycleBins on GoogleMaps
             for (int i = 0; i < 5; i++) {
                 LatLng bin = new LatLng(mClosestLocations[i].getLatitude(), mClosestLocations[i].getLongitude());
                 mMap.addMarker(new MarkerOptions().position(bin).title("Recycling Bin"));
-                log(mClosestLocations[i].toString());
             }
             // Center and zoom in on the closest RecycleBin
             LatLng closest = new LatLng(mClosestLocations[0].getLatitude(), mClosestLocations[0].getLongitude());
-            mMap.moveCamera(CameraUpdateFactory.zoomTo(17f));
-            mMap.moveCamera(CameraUpdateFactory.newLatLng(closest));
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(closest, 17f));
           //  onMapReady(mMap);
         }
     } // end ASyncTask
@@ -276,13 +283,25 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        String markerTitle = "Recycle bin here!";
 
-        // TODO: fix to be current location
-        mMyLocation = new LatLng(40.7284738, -73.9950050);
-        mMap.addMarker(new MarkerOptions().position(mMyLocation).title(markerTitle).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
-        mMap.moveCamera(CameraUpdateFactory.zoomTo(17f));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(mMyLocation));
+        mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+
+        if ( Build.VERSION.SDK_INT >= 23 &&
+                ContextCompat.checkSelfPermission( getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION ) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission( getApplicationContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED)
+            mFusedLocationProviderClient.getLastLocation()
+                    .addOnSuccessListener(this, new OnSuccessListener<Location>() {
+                        @Override
+                        public void onSuccess(Location location) {
+                            // Got last known location. In some rare situations this can be null.
+                            log("Lat: " + location.getLatitude() + " : " + "Lon: " + location.getLongitude());
+                            mMyLocation = new LatLng(location.getLatitude(), location.getLongitude());
+                            mMap.addMarker(new MarkerOptions().position(mMyLocation).title("Recycle bin here!").icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
+                            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(mMyLocation, 17f));
+                        }
+                    });
+        else
+            log("COULD NOT GET LOC");
 
     }
 }
