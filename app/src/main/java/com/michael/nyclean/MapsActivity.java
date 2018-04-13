@@ -1,9 +1,14 @@
 package com.michael.nyclean;
 
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.os.Handler;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
@@ -22,9 +27,12 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
 
 import org.json.JSONArray;
@@ -66,12 +74,27 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+        mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+
+        if ( Build.VERSION.SDK_INT >= 23 &&
+                ContextCompat.checkSelfPermission( getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION ) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission( getApplicationContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED)
+            mFusedLocationProviderClient.getLastLocation()
+                    .addOnSuccessListener(this, new OnSuccessListener<Location>() {
+                        @Override
+                        public void onSuccess(Location location) {
+                            // Got last known location. In some rare situations this can be null.
+                            log("Lat: " + location.getLatitude() + " : " + "Lon: " + location.getLongitude());
+                            mMyLocation = new LatLng(location.getLatitude(), location.getLongitude());
+                        }
+                    });
+        else
+            log("COULD NOT GET LOC");
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-
-
 
 
         mListOfBins = (ListView) findViewById(R.id.list_of_bins);
@@ -237,7 +260,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         protected void onPostExecute(Void result) {
             super.onPostExecute(result);
             // Find out current location
-            mMyLocation = new LatLng(40.7284738, -73.9950050);
             findClosestPlaces(mMyLocation);
 
             for(int i = 0; i < mClosestLocations.length; i++){
@@ -255,7 +277,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 locationsList.add(newBinLocation);
             }
 
-
             mListOfBins.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
@@ -263,7 +284,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     String lat = ((TextView)view.findViewById(R.id.latitutde)).getText().toString();
                     String lon = ((TextView)view.findViewById(R.id.longitude)).getText().toString();
                     LatLng loc = new LatLng(Double.parseDouble(lat), Double.parseDouble(lon));
-                    mMap.addMarker(new MarkerOptions().position(loc).title("Recycle Bin Here!"));
+                    mMap.addMarker(new MarkerOptions().position(loc).title("Recycle Bin Here!").icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_bin)));
                     mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(loc, 17f));
                 }
             });
@@ -275,37 +296,27 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             // Display closest five RecycleBins on GoogleMaps
             for (int i = 0; i < 5; i++) {
                 LatLng bin = new LatLng(mClosestLocations[i].getLatitude(), mClosestLocations[i].getLongitude());
-                mMap.addMarker(new MarkerOptions().position(bin).title("Recycling Bin"));
+                mMap.addMarker(new MarkerOptions().position(bin).title("Recycling Bin").icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_bin)));
             }
             // Center and zoom in on the closest RecycleBin
-            LatLng closest = new LatLng(mClosestLocations[0].getLatitude(), mClosestLocations[0].getLongitude());
-            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(closest, 17f));
-          //  onMapReady(mMap);
+            final LatLng closest = new LatLng(mClosestLocations[0].getLatitude(), mClosestLocations[0].getLongitude());
+            mMap.addMarker(new MarkerOptions().position(mMyLocation).title("Your Current Location!").icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
+      //      mMap.addPolyline(new PolylineOptions().add(closest, mMyLocation).width(5f).color(Color.BLUE));
+
+
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(mMyLocation, 17f));
+
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(closest, 17f));
+                }
+            }, 2000);
         }
     } // end ASyncTask
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-
-        mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
-
-        if ( Build.VERSION.SDK_INT >= 23 &&
-                ContextCompat.checkSelfPermission( getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION ) == PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission( getApplicationContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED)
-            mFusedLocationProviderClient.getLastLocation()
-                    .addOnSuccessListener(this, new OnSuccessListener<Location>() {
-                        @Override
-                        public void onSuccess(Location location) {
-                            // Got last known location. In some rare situations this can be null.
-                            log("Lat: " + location.getLatitude() + " : " + "Lon: " + location.getLongitude());
-                            mMyLocation = new LatLng(location.getLatitude(), location.getLongitude());
-                            mMap.addMarker(new MarkerOptions().position(mMyLocation).title("You Are Here!").icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
-                            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(mMyLocation, 17f));
-                        }
-                    });
-        else
-            log("COULD NOT GET LOC");
-
     }
 }
